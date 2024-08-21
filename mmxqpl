@@ -1,15 +1,12 @@
-
-        if (label.equalsIgnoreCase("skyblock") || label.equalsIgnoreCase("sb")) {
-            if (args.length == 0) {
+ else if (args[0].equalsIgnoreCase("help")) {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
-                    // 列出指令列表
-                    if (player.hasPermission("skyblock.admin")) {
+                                       if (player.hasPermission("skyblock.admin")) {
                         getLogger().info("§rUnknown command. Type \"/help\" for help.");
                     } else {
-                        player.sendMessage(message.getString("no-permission"));
+                        player.sendMessage(msg(message.getString("Command.error.noPermission")));
                     }
                 } else if (sender instanceof ConsoleCommandSender) {
                     getLogger().info("§rUnknown command. Type \"/help\" for help.");
                 }
-            } else if (args[0].equalsIgnoreCase("help")) {
+            }
