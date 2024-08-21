@@ -1,25 +1,23 @@
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
-public class MMXQPlugin extends JavaPlugin {
+public class GlowEffectPlugin extends JavaPlugin implements Listener {
+
+    private static final PotionEffectType GLOWING = PotionEffectType.getByName("GLOWING");
+    private static final int POTION_AMPLIFIER = 0; // 无放大效果
+    private static final int POTION_DURATION = 20 * 60 * 10; // 10分钟，转换为tick
 
     @Override
     public void onEnable() {
         // 插件启用时的逻辑
-        getCommand("mmxq").setExecutor(this);
-        getCommand("mmxq").setTabCompleter(new TabCompleter() {
-            @Override
-            public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-                // Tab补全逻辑
-                return null;
-            }
-        });
-        saveDefaultConfig(); // 保存默认配置
+        Bukkit.getPluginManager().registerEvents(this, this); // 注册事件监听器
     }
 
     @Override
@@ -27,19 +25,10 @@ public class MMXQPlugin extends JavaPlugin {
         // 插件禁用时的逻辑
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("mmxq") && args.length == 1) {
-            if (args[0].equalsIgnoreCase("help")) {
-                if (sender instanceof Player) {
-                    Player player = (Player) sender;
-                    player.sendMessage(ChatColor.AQUA + "[帮助]");
-                } else {
-                    Bukkit.getConsoleSender().sendMessage(ChatColor.AQUA + "[帮助]");
-                }
-                return true;
-            }
-        }
-        return false;
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        // 给玩家添加发光效果
+        player.addPotionEffect(new PotionEffect(GLOWING, POTION_DURATION, POTION_AMPLIFIER, false, false, false));
     }
 }
