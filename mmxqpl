@@ -17,3 +17,90 @@
         }
         return false;
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@Override
+    public void onEnable() {
+        // Plugin startup logic
+        long startTime = System.currentTimeMillis();
+        Bukkit.getLogger().info(prefix+" 正在启动插件...");
+
+        getServer().getPluginCommand("NGtp").setExecutor(this);
+
+        long time = System.currentTimeMillis() - startTime;
+        System.out.println(prefix+" 插件启动成功 用时 "+ MsToS(time) + "秒");
+    }
+
+    @Override
+    public void onDisable() {
+        // Plugin shutdown logic
+        long time = System.currentTimeMillis() - sT;
+        Bukkit.getLogger().info(prefix+" 插件关闭成功 插件总运行时长 "+ MsToS(time) + "秒");
+    }
+    @Override
+    public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
+        if (sender.hasPermission("ngtp.admin")) {
+            if (sender instanceof Player) {
+                if (cmd.getName().equalsIgnoreCase("NGtp")) {
+                    sender.sendMessage("/ngtp --显示插件帮助");
+                    sender.sendMessage("/tpn --传送到玩家附近的整数坐标上");
+                    return true;
+                }else if (cmd.getName().equalsIgnoreCase("tpn")) {
+                    // 预设的yaw和pitch值
+                    int[] presetYaws = {-180,-90,-60,-30,0, 30, 60, 90, 180};
+                    int[] presetPitchs = {-90,-60,-30,0, 30, 60, 90};
+
+                    Player player = (Player) sender;
+                    int playerYaw = (int) player.getLocation().getYaw();
+                    int playerPitch = (int) player.getLocation().getPitch();
+                    int x = player.getLocation().getBlockX();
+                    int y = player.getLocation().getBlockY();
+                    int z = player.getLocation().getBlockZ();
+
+                    int closestYaw = closestValue(playerYaw, presetYaws);
+
+                    int closestPitch = closestValue(playerPitch, presetPitchs);
+                    // 设置玩家视觉坐标
+                    player.teleport(new Location(player.getWorld(), (double)x + 0.5, y, (double)z + 0.5, closestYaw, closestPitch));
+
+                }
+            }
+        }
+        return false;
+    }
+    private int closestValue(int value, int[] presetValues) {
+        int closest = presetValues[0];
+        int minDifference = Math.abs(value - presetValues[0]);
+
+        for (int presetValue : presetValues) {
+            int difference = Math.abs(value - presetValue);
+            if (difference < minDifference) {
+                minDifference = difference;
+                closest = presetValue;
+            }
+        }
+
+        return closest;
+    }
+}
