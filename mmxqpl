@@ -1,47 +1,15 @@
-public class Lunchmc extends JavaPlugin {
-    @Override
-    public void onEnable() {
-        // 确保命令名未被使用
-        String commandName = "yourUniqueCommand";
-        
-        // 检查命令是否已注册
-        if (getCommand(commandName) == null) {
-            // 如果未注册，创建一个新的 PluginCommand 实例
-            PluginCommand command = new PluginCommand(commandName, this);
-            command.setExecutor(new YourCommandExecutor());
-            this.getCommand(commandName).setExecutor(command);
-        } else {
-            // 如果已注册，直接设置执行器
-            getCommand(commandName).setExecutor(new YourCommandExecutor());
-        }
-    }
-    
-    // YourCommandExecutor 类实现 CommandExecutor 接口
-    private class YourCommandExecutor implements CommandExecutor {
-        @Override
-        public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-            // 实现你的命令逻辑
-            return true;
-        }
-    }
-}
-```
 
-但是，更推荐的处理方式是直接尝试注册命令，如果命令已经存在，则直接设置执行器，如下所示：
-
-```java
-public class Lunchmc extends JavaPlugin {
-    @Override
-    public void onEnable() {
-        getCommand("yourCommand").setExecutor(new YourCommandExecutor());
-    }
-    
-    // YourCommandExecutor 类实现 CommandExecutor 接口
-    private class YourCommandExecutor implements CommandExecutor {
-        @Override
-        public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-            // 实现你的命令逻辑
-            return true;
-        }
-    }
-}
+        if (label.equalsIgnoreCase("skyblock") || label.equalsIgnoreCase("sb")) {
+            if (args.length == 0) {
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    // 列出指令列表
+                    if (player.hasPermission("skyblock.admin")) {
+                        getLogger().info("§rUnknown command. Type \"/help\" for help.");
+                    } else {
+                        player.sendMessage(message.getString("no-permission"));
+                    }
+                } else if (sender instanceof ConsoleCommandSender) {
+                    getLogger().info("§rUnknown command. Type \"/help\" for help.");
+                }
+            } else if (args[0].equalsIgnoreCase("help")) {
