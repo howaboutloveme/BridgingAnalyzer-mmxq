@@ -1,0 +1,45 @@
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class MMXQPlugin extends JavaPlugin {
+
+    @Override
+    public void onEnable() {
+        // 插件启用时的逻辑
+        getCommand("mmxq").setExecutor(this);
+        getCommand("mmxq").setTabCompleter(new TabCompleter() {
+            @Override
+            public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+                // Tab补全逻辑
+                return null;
+            }
+        });
+        saveDefaultConfig(); // 保存默认配置
+    }
+
+    @Override
+    public void onDisable() {
+        // 插件禁用时的逻辑
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (cmd.getName().equalsIgnoreCase("mmxq") && args.length == 1) {
+            if (args[0].equalsIgnoreCase("help")) {
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    player.sendMessage(ChatColor.AQUA + "[帮助]");
+                } else {
+                    Bukkit.getConsoleSender().sendMessage(ChatColor.AQUA + "[帮助]");
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+}
