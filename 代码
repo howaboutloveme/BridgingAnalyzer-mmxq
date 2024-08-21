@@ -1,0 +1,73 @@
+package mmxq.lunchmc;
+
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Objects;
+
+public final class Lunchmc extends JavaPlugin {
+
+    @Override
+    public void onEnable() {
+        // Plugin startup logic
+        getLogger().info("猫猫星球插件启动成功");
+        regCommands();
+    }
+
+    @Override
+    public void onDisable() {
+        // Plugin shutdown logic
+        getLogger().info("猫猫星球插件关闭了");
+    }
+private void regCommands(){
+        Objects.requireNonNull (this.getCommand("mmxq")).setExecutor(new commands());
+}
+}
+
+
+
+
+
+
+
+package mmxq.lunchmc;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+public class commands implements CommandExecutor {
+    @Override
+    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (commandSender instanceof Player) {
+            Player player = (Player) commandSender;
+            if (args.length == 1) {
+                player.sendMessage("mmxq");
+            }
+            if (args.length == 2) {
+                player.sendMessage("help");
+            }
+        }
+            return true;
+        }
+    }
+
+
+
+
+
+
+
+Name: lunchmc
+version: 1.1
+main: mmxq.lunchmc.Lunchmc
+api-version: '1.20'
+commands:
+  mmxq:
+    description: "mmxq help"
+    permission: lunchmc.mmxq
+    permission-message: "no permission"
+    usage: "/mmxq <Help>"
+    aliases:
+      -l
