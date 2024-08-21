@@ -39,6 +39,27 @@
 
 
 
+package cn.ng;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.text.DecimalFormat;
+
+public final class NGTeleport extends JavaPlugin {
+
+    public static double MsToS(long milliseconds) {
+        DecimalFormat df = new DecimalFormat("#.###");
+        return Double.parseDouble(df.format((double) milliseconds / 1000));
+
+    }
+    public String prefix = "[NG_TP V" + getDescription().getVersion() + "]";
+    long sT = System.currentTimeMillis();
+
+
+
 
 @Override
     public void onEnable() {
