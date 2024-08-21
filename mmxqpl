@@ -1,1 +1,15 @@
-myCommand = new MyCommand(this);        getCommand("mycommand").setExecutor(myCommand);    }
+Error occurred while enabling lunchmc v1.1 (Is it up to date?)
+java.lang.NullPointerException: Cannot invoke "org.bukkit.command.PluginCommand.setExecutor(org.bukkit.command.CommandExecutor)" because the return value of "org.bukkit.Bukkit.getPluginCommand(String)" is null
+        at mmxq.lunchmc.Lunchmc.onEnable(Lunchmc.java:22) ~[lunchmc-1.0-SNAPSHOT.jar:?]
+        at org.bukkit.plugin.java.JavaPlugin.setEnabled(JavaPlugin.java:281) ~[paper-api-1.20.1-R0.1-SNAPSHOT.jar:?]
+        at io.papermc.paper.plugin.manager.PaperPluginInstanceManager.enablePlugin(PaperPluginInstanceManager.java:189) ~[paper-1.20.1.jar:git-Paper-64]
+        at io.papermc.paper.plugin.manager.PaperPluginManagerImpl.enablePlugin(PaperPluginManagerImpl.java:104) ~[paper-1.20.1.jar:git-Paper-64]
+        at org.bukkit.plugin.SimplePluginManager.enablePlugin(SimplePluginManager.java:507) ~[paper-api-1.20.1-R0.1-SNAPSHOT.jar:?]
+        at org.bukkit.craftbukkit.v1_20_R1.CraftServer.enablePlugin(CraftServer.java:639) ~[paper-1.20.1.jar:git-Paper-64]
+        at org.bukkit.craftbukkit.v1_20_R1.CraftServer.enablePlugins(CraftServer.java:550) ~[paper-1.20.1.jar:git-Paper-64]
+        at net.minecraft.server.MinecraftServer.loadWorld0(MinecraftServer.java:636) ~[paper-1.20.1.jar:git-Paper-64]
+        at net.minecraft.server.MinecraftServer.loadLevel(MinecraftServer.java:435) ~[paper-1.20.1.jar:git-Paper-64]
+        at net.minecraft.server.dedicated.DedicatedServer.initServer(DedicatedServer.java:308) ~[paper-1.20.1.jar:git-Paper-64]
+        at net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:1101) ~[paper-1.20.1.jar:git-Paper-64]
+        at net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:318) ~[paper-1.20.1.jar:git-Paper-64]
+        at java.lang.Thread.run(Thread.java:833) ~[?:?]
