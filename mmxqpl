@@ -1,12 +1,19 @@
- else if (args[0].equalsIgnoreCase("help")) {
-                if (sender instanceof Player) {
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        // 判断是否是主指令
+        if (label.equalsIgnoreCase("mmxq")) {
+            if (args[0].equalsIgnoreCase("help")) {
+                if (sender instanceof Player) {//判断是否是玩家
                     Player player = (Player) sender;
-                                       if (player.hasPermission("skyblock.admin")) {
-                        getLogger().info("§rUnknown command. Type \"/help\" for help.");
+                    if (player.hasPermission("skyblock.admin")) {//判断权限
+                        getLogger().info("help cmd");
                     } else {
-                        player.sendMessage(msg(message.getString("Command.error.noPermission")));
+                        player.sendMessage(ChatColor.RED+"你无权!");
                     }
-                } else if (sender instanceof ConsoleCommandSender) {
-                    getLogger().info("§rUnknown command. Type \"/help\" for help.");
+                } else if (sender instanceof ConsoleCommandSender) {//判断是否是控制台
+                    getLogger().info("help cmd");
                 }
             }
+        }
+        return false;
+    }
