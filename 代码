@@ -1,48 +1,57 @@
-package mmxq.lunchmc;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerDeathEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.plugin.java.JavaPlugin;
-import java.util.Objects;public final class Lunchmc extends JavaPlugin {    
-@Override    
-public void onEnable() {
-        // Plugin startup logic        
-getLogger().info("猫猫星球插件启动成功");        regCommands();    }    
-@Override    public void onDisable() {        // Plugin shutdown logic        getLogger().info("猫猫星球插件关闭了");    }
-private void regCommands({   
-     getCommand("mmxq").setExecutor(new commands());}}package
 
+public class NoCommandRegisterPlugin extends JavaPlugin implements Listener {
 
+    @Override
+    public void onEnable() {
+        // 注册监听器
+        getServer().getPluginManager().registerEvents(this, this);
+    }
 
-
-
-        if (label.equalsIgnoreCase("mmxq") && args.length == 1) {
-
-            String arg1 = args[0];
-
-            
-        } else {
-            sender.sendMessage(ChatColor.WHITE + "-------------------------------------");
-            sender.sendMessage(ChatColor.GOLD + " mmxq");
-            sender.sendMessage(ChatColor.WHITE + "-------------------------------------");
-            return false;
+    // 处理/mmxq help 和 /mmxq crime
+    @EventHandler
+    public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        if (event.getMessage().startsWith("/mmxq")) {
+            Player player = event.getPlayer();
+            String[] commandParts = event.getMessage().split(" ");
+            if (commandParts.length > 0) {
+                String command = commandParts[0];
+                if (command.equalsIgnoreCase("/mmxq help")) {
+                    player.sendMessage(ChatColor.GREEN + "这是一个帮助信息，mmxq插件的使用指南。");
+                    event.setCancelled(true); // 取消原生命令的执行
+                } else if (command.equalsIgnoreCase("/mmxq crime")) {
+                    PotionEffect redstoneGlow = new PotionEffect(PotionEffectType.GLOWING, 3 * 60 * 20, 0);
+                    player.addPotionEffect(redstoneGlow);
+                    event.setCancelled(true); // 取消原生命令的执行
+                }
+            }
         }
+    }
 
-        return false;
+    // 当玩家被击杀时，自动执行/mmxq crime
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        // 确保玩家是被另一个玩家杀死的
+        Player victim = event.getEntity();
+        if (victim.getLastDamageCause() instanceof org.bukkit.event.entity.EntityDamageByEntityEvent) {
+            org.bukkit.event.entity.EntityDamageByEntityEvent lastDamage = (org.bukkit.event.entity.EntityDamageByEntityEvent) victim.getLastDamageCause();
+            if (lastDamage.getDamager() instanceof Player) {
+                Player killer = (Player) lastDamage.getDamager();
+                // 执行/mmxq crime
+                PotionEffect redstoneGlow = new PotionEffect(PotionEffectType.GLOWING, 3 * 60 * 20, 0);
+                killer.addPotionEffect(redstoneGlow);
+            }
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-
- mmxq.lunchmc;import org.bukkit.command.Command;import org.bukkit.command.CommandExecutor;import org.bukkit.command.CommandSender;import org.bukkit.entity.Player;import org.jetbrains.annotations.NotNull;public class commands implements CommandExecutor {    @Override    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {        if (commandSender instanceof Player) {            Player player = (Player) commandSender;            if(label.equalsIgnoreCase("mmxq")) {              if (args.size()==0) {                player.sendMessage("mmxq");              }else if (args[0].equalsIgnoreCase("help")) {                player.sendMessage("help");              }            }        }            return true;        }    }
-
-
-
-
-
-
-Name: lunchmcversion: 1.1main: mmxq.lunchmc.Lunchmcapi-version: '1.20'commands:  mmxq:    description: "mmxq help"    permission: lunchmc.mmxq    permission-message: "no permission"    usage: "/mmxq <Help>"    aliases:      -l
