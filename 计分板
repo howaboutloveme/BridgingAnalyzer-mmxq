@@ -1,63 +1,160 @@
-package com.example.scoreboard;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scoreboard.*;
+import org.bukkit.configuration.file.FileConfiguration;
+import java.util.HashMap;
+import java.util.Map;
 
-public class ScoreboardPlugin extends JavaPlugin implements Listener {
+public class CustomScoreboard extends JavaPlugin {
 
-    private ScoreboardManager scoreboardManager;
-    private Scoreboard scoreboard;
-    private Objective objective;
+    private Map<Player, Scoreboard> playerScoreboards = new HashMap<>();
+    private FileConfiguration config;
 
     @Override
     public void onEnable() {
-        // 初始化ScoreboardManager
-        scoreboardManager = Bukkit.getScoreboardManager();
-        scoreboard = scoreboardManager.getNewScoreboard();
+        saveDefaultConfig();
+        config = this.getConfig();
+        reloadConfig();
 
-        // 创建Objective
-        objective = scoreboard.registerNewObjective("playerNameScore", "dummy");
-        objective.setDisplayName(ChatColor.AQUA + "Player Names");
+        // 初始化每个在线玩家的计分板
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            setupScoreboard(player);
+        }
+    }
+}
+```
+
+### 步骤 2: 设置计分板
+
+```java
+    private void setupScoreboard(Player player) {
+        ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+        Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
+        Objective objective = scoreboard.registerNewObjective("display", "dummy");
+        objective.setDisplayName(getConfiguredDisplayName());
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        // 注册事件监听器（自身）
-        getServer().getPluginManager().registerEvents(this, this);
-
-        // 设置所有现有玩家的计分板
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            Score score = objective.getScore(player.getName());
-            score.setScore(1); // 设置初始分数
-            player.setScoreboard(scoreboard);
+        // 读取配置文件中的行数据
+        List<String> rows = config.getStringList("scoreboard.rows");
+        for (int i = 0; i < rows.size(); i++) {
+            String row = rows.get(i);
+            objective.getScore(row).setScore(rows.size() - i);
         }
+
+        playerScoreboards.put(player, scoreboard);
+        player.setScoreboard(scoreboard);
+    }
+}
+```
+
+### 步骤 3: 加载配置数据
+
+```java
+    private String getConfiguredDisplayName() {
+        return ChatColor.translateAlternateColorCodes('&', config.getString("scoreboard.display-name", "Scoreboard"));
+    }
+}
+```
+
+### 步骤 4: 更新和监听玩家事件
+
+```java
+    @Override
+    public void onDisable() {
+        // 移除所有玩家的计分板
+        playerScoreboards.forEach((player, scoreboard) -> player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard()));
+    }
+
+    // 监听玩家加入和离开事件
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        setupScoreboard(event.getPlayer());
+    }
+
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        playerScoreboards.remove(event.getPlayer());
+    }
+}
+```
+
+### 完整代码
+
+将上述所有部分组合在一起，你的主类应如下所示：
+
+```java
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.*;
+import org.bukkit.configuration.file.FileConfiguration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class CustomScoreboard extends JavaPlugin {
+
+    private Map<Player, Scoreboard> playerScoreboards = new HashMap<>();
+    private FileConfiguration config;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        config = this.getConfig();
+        reloadConfig();
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            setupScoreboard(player);
+        }
+
+        getServer().getPluginManager().registerEvents(this, this);
+    }
+
+    private void setupScoreboard(Player player) {
+        ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
+        Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
+        Objective objective = scoreboard.registerNewObjective("display", "dummy");
+        objective.setDisplayName(getConfiguredDisplayName());
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        List<String> rows = config.getStringList("scoreboard.rows");
+        for (int i = 0; i < rows.size(); i++) {
+            String row = rows.get(i);
+            objective.getScore(row).setScore(rows.size() - i);
+        }
+
+        playerScoreboards.put(player, scoreboard);
+        player.setScoreboard(scoreboard);
+    }
+
+    private String getConfiguredDisplayName() {
+        return ChatColor.translateAlternateColorCodes('&', config.getString("scoreboard.display-name", "Scoreboard"));
     }
 
     @Override
     public void onDisable() {
-        // 清理资源
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
-        }
+        playerScoreboards.forEach((player, scoreboard) -> player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard()));
     }
 
-    // 事件处理
-    @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        Score score = objective.getScore(player.getName());
-        score.setScore(1); // 设置初始分数
-        player.setScoreboard(scoreboard);
+        setupScoreboard(event.getPlayer());
     }
 
-    @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+        playerScoreboards.remove(event.getPlayer());
     }
 }
+```
+
+### 步骤 5: 配置文件
+
+在你的插件目录中，应有一个`config.yml`文件，包含以下内容：
+
+```yml
+scoreboard:
+  display-name: "&aScoreboard"
+  rows:
+    - "&eHello Player"
+    - "&cYour Score: &f0"
+    - "&9Total Players: &f%online_players%/%max_players%"
