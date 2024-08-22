@@ -1,26 +1,7 @@
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // 判断是否是主指令
-        if (label.equalsIgnoreCase("mmxq")) {
-            if (args[0].equalsIgnoreCase("help")) {
-                if (sender instanceof Player) {//判断是否是玩家
-                    Player player = (Player) sender;
-                    if (player.hasPermission("skyblock.admin")) {//判断权限
-                        getLogger().info("help cmd");
-                    } else {
-                        player.sendMessage(ChatColor.RED+"你无权!");
-                    }
-                } else if (sender instanceof ConsoleCommandSender) {//判断是否是控制台
-                    getLogger().info("help cmd");
-                }
-            }
-        }
-        return false;
-    }
 
 
-
-
+org.bukkit.plugin.java.JavaPlugin.getConfig(JavaPlugin.java:150) ~[paper-api-1.20.1-R0.1-SNAPSHOT.jar:?]
+        at lmcboard.lmcboard.Lmcboard.reloadConfig(Lmcboard.java:66) ~[lmcboard-1.0-SNAPSHOT.jar:?]
 
 
 
