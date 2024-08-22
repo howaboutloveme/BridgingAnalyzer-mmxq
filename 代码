@@ -13,6 +13,25 @@ private void regCommands({
 
 
 
+        if (label.equalsIgnoreCase("mmxq") && args.length == 1) {
+
+            String arg1 = args[0];
+
+            
+        } else {
+            sender.sendMessage(ChatColor.WHITE + "-------------------------------------");
+            sender.sendMessage(ChatColor.GOLD + " mmxq");
+            sender.sendMessage(ChatColor.WHITE + "-------------------------------------");
+            return false;
+        }
+
+        return false;
+    }
+}
+
+
+
+
 
 
 
