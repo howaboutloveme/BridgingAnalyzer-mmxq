@@ -1,123 +1,74 @@
-
-
-org.bukkit.plugin.java.JavaPlugin.getConfig(JavaPlugin.java:150) ~[paper-api-1.20.1-R0.1-SNAPSHOT.jar:?]
-        at lmcboard.lmcboard.Lmcboard.reloadConfig(Lmcboard.java:66) ~[lmcboard-1.0-SNAPSHOT.jar:?]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-package cn.ng;
-
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.text.DecimalFormat;
+import java.util.logging.Level;
 
-public final class NGTeleport extends JavaPlugin {
+public class Lmcboard extends JavaPlugin implements Listener {
 
-    public static double MsToS(long milliseconds) {
-        DecimalFormat df = new DecimalFormat("#.###");
-        return Double.parseDouble(df.format((double) milliseconds / 1000));
+    private String scoreboardTitle;
+    private String scoreboardContent;
 
-    }
-    public String prefix = "[NG_TP V" + getDescription().getVersion() + "]";
-    long sT = System.currentTimeMillis();
-
-
-
-
-@Override
+    @Override
     public void onEnable() {
-        // Plugin startup logic
-        long startTime = System.currentTimeMillis();
-        Bukkit.getLogger().info(prefix+" 正在启动插件...");
-
-        getServer().getPluginCommand("NGtp").setExecutor(this);
-
-        long time = System.currentTimeMillis() - startTime;
-        System.out.println(prefix+" 插件启动成功 用时 "+ MsToS(time) + "秒");
+        // 加载配置文件
+        reloadConfig();
+        parseConfig();
+        
+        // 注册事件监听器
+        getServer().getPluginManager().registerEvents(this, this);
+        
+        // 设置计分板
+        setupScoreboardForAllPlayers();
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
-        long time = System.currentTimeMillis() - sT;
-        Bukkit.getLogger().info(prefix+" 插件关闭成功 插件总运行时长 "+ MsToS(time) + "秒");
+        // 插件被禁用时的处理
     }
-    @Override
-    public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command cmd, String label, String[] args) {
-        if (sender.hasPermission("ngtp.admin")) {
-            if (sender instanceof Player) {
-                if (cmd.getName().equalsIgnoreCase("NGtp")) {
-                    sender.sendMessage("/ngtp --显示插件帮助");
-                    sender.sendMessage("/tpn --传送到玩家附近的整数坐标上");
-                    return true;
-                }else if (cmd.getName().equalsIgnoreCase("tpn")) {
-                    // 预设的yaw和pitch值
-                    int[] presetYaws = {-180,-90,-60,-30,0, 30, 60, 90, 180};
-                    int[] presetPitchs = {-90,-60,-30,0, 30, 60, 90};
 
-                    Player player = (Player) sender;
-                    int playerYaw = (int) player.getLocation().getYaw();
-                    int playerPitch = (int) player.getLocation().getPitch();
-                    int x = player.getLocation().getBlockX();
-                    int y = player.getLocation().getBlockY();
-                    int z = player.getLocation().getBlockZ();
-
-                    int closestYaw = closestValue(playerYaw, presetYaws);
-
-                    int closestPitch = closestValue(playerPitch, presetPitchs);
-                    // 设置玩家视觉坐标
-                    player.teleport(new Location(player.getWorld(), (double)x + 0.5, y, (double)z + 0.5, closestYaw, closestPitch));
-
-                }
-            }
+    private void setupScoreboardForAllPlayers() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            setupScoreboard(player);
         }
-        return false;
     }
-    private int closestValue(int value, int[] presetValues) {
-        int closest = presetValues[0];
-        int minDifference = Math.abs(value - presetValues[0]);
 
-        for (int presetValue : presetValues) {
-            int difference = Math.abs(value - presetValue);
-            if (difference < minDifference) {
-                minDifference = difference;
-                closest = presetValue;
-            }
+    private void setupScoreboard(Player player) {
+        // 这里设置计分板，使用scoreboardTitle和scoreboardContent
+        // 示例代码，需要根据你的计分板库进行修改
+        // player.setScoreboard(/*...*/);
+    }
+
+    private void parseConfig() {
+        scoreboardTitle = getConfig().getString("scoreboard.title", "猫猫星球");
+        scoreboardContent = getConfig().getString("scoreboard.content", "欢迎游玩");
+    }
+    
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        String command = event.getMessage().toLowerCase();
+        if (command.startsWith("/lmcboard reload")) {
+            getServer().getScheduler().runTask(this, this::reloadConfig);
+            event.getPlayer().sendMessage(ChatColor.GREEN + "计分板配置已重载！");
+            setupScoreboardForAllPlayers();
+            event.setCancelled(true);
         }
-
-        return closest;
     }
 }
+```
 
+### 步骤2: 创建配置文件
 
+创建一个`config.yml`文件，用于存储计分板的标题和内容。在插件的`onEnable`方法中加载和解析这个配置文件。
 
-
-
-
-
-ngtp:
-    description: "插件帮助"
-    permission-message: "你没有权限执行这个命令"
-    permission: ngtp.admin
-  tpn:
-    description: "传送到玩家附近的整数坐标上"
-    permission-message: "你没有权限执行这个命令"
-    permission: ngtp.admin
+```yaml
+# config.yml
+scoreboard:
+  title: 猫猫星球
+  content: 欢迎游玩
