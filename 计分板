@@ -1,0 +1,84 @@
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.Bukkit;
+import org.bukkit.scoreboard.*;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import java.io.File;
+import java.util.List;
+
+public class LunchMCPlugin extends JavaPlugin {
+
+    private YamlConfiguration config;
+    private ScoreboardManager scoreboardManager;
+    private Scoreboard scoreboard;
+    private Objective objective;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        loadConfig();
+        initializeScoreboard();
+
+        PluginManager manager = getServer().getPluginManager();
+        manager.registerEvents(new ScoreboardListener(), this);
+    }
+
+    private void loadConfig() {
+        config = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml"));
+    }
+
+    private void initializeScoreboard() {
+        scoreboardManager = Bukkit.getScoreboardManager();
+        scoreboard = scoreboardManager.getNewScoreboard();
+        objective = scoreboard.registerNewObjective("lunchScore", "dummy");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+        updateScoreboard();
+    }
+
+    private void updateScoreboard() {
+        String title = config.getString("scoreboard.title", "Scoreboard Title");
+        List<String> lines = config.getStringList("scoreboard.entries");
+        objective.setDisplayName(ChatColor.translateAlternateColorCodes('&', title));
+        int lineCount = 1;
+        for (String line : lines) {
+            Score score = objective.getScore(Bukkit.getOfflinePlayer("Player" + lineCount));
+            score.setScore(lineCount);
+            lineCount++;
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.setScoreboard(scoreboard);
+        }
+    }
+
+    class ScoreboardListener implements CommandExecutor {
+        @Override
+        public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+            if (command.getName().equals("reloadboard")) {
+                if (sender.hasPermission("lunchmc.reload")) {
+                    updateScoreboard();
+                    sender.sendMessage("Scoreboard has been reloaded.");
+                } else {
+                    sender.sendMessage("You do not have permission to reload the scoreboard.");
+                }
+                return true;
+            }
+            return false;
+        }
+    }
+}
+```
+
+### 步骤 2: 配置文件
+在插件的数据文件夹中创建`config.yml`文件，配置计分板的标题和行条目。
+
+```yaml
+scoreboard:
+  title: "&cLunchMC Scoreboard"
+  entries:
+    - "&aLine 1"
+    - "&bLine 2"
+    - "&cLine 3"
