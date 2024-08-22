@@ -1,94 +1,16 @@
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.*;
 import org.bukkit.configuration.file.FileConfiguration;
-import java.util.HashMap;
-import java.util.Map;
-
-public class CustomScoreboard extends JavaPlugin {
-
-    private Map<Player, Scoreboard> playerScoreboards = new HashMap<>();
-    private FileConfiguration config;
-
-    @Override
-    public void onEnable() {
-        saveDefaultConfig();
-        config = this.getConfig();
-        reloadConfig();
-
-        // 初始化每个在线玩家的计分板
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            setupScoreboard(player);
-        }
-    }
-}
-```
-
-### 步骤 2: 设置计分板
-
-```java
-    private void setupScoreboard(Player player) {
-        ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
-        Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
-        Objective objective = scoreboard.registerNewObjective("display", "dummy");
-        objective.setDisplayName(getConfiguredDisplayName());
-        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-        // 读取配置文件中的行数据
-        List<String> rows = config.getStringList("scoreboard.rows");
-        for (int i = 0; i < rows.size(); i++) {
-            String row = rows.get(i);
-            objective.getScore(row).setScore(rows.size() - i);
-        }
-
-        playerScoreboards.put(player, scoreboard);
-        player.setScoreboard(scoreboard);
-    }
-}
-```
-
-### 步骤 3: 加载配置数据
-
-```java
-    private String getConfiguredDisplayName() {
-        return ChatColor.translateAlternateColorCodes('&', config.getString("scoreboard.display-name", "Scoreboard"));
-    }
-}
-```
-
-### 步骤 4: 更新和监听玩家事件
-
-```java
-    @Override
-    public void onDisable() {
-        // 移除所有玩家的计分板
-        playerScoreboards.forEach((player, scoreboard) -> player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard()));
-    }
-
-    // 监听玩家加入和离开事件
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        setupScoreboard(event.getPlayer());
-    }
-
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        playerScoreboards.remove(event.getPlayer());
-    }
-}
-```
-
-### 完整代码
-
-将上述所有部分组合在一起，你的主类应如下所示：
-
-```java
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scoreboard.*;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,64 +19,53 @@ public class CustomScoreboard extends JavaPlugin {
 
     private Map<Player, Scoreboard> playerScoreboards = new HashMap<>();
     private FileConfiguration config;
+    private File dataFolder;
 
     @Override
     public void onEnable() {
+        dataFolder = getDataFolder();
         saveDefaultConfig();
-        config = this.getConfig();
-        reloadConfig();
+        config = YamlConfiguration.loadConfiguration(new File(dataFolder, "config.yml"));
+        registerCustomCommand("lmc reload");
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             setupScoreboard(player);
         }
+    }
 
-        getServer().getPluginManager().registerEvents(this, this);
+    private void registerCustomCommand(String command) {
+        try {
+            Field commandMapField = Bukkit.getPluginManager().getClass().getDeclaredField("commandMap");
+            commandMapField.setAccessible(true);
+            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getPluginManager());
+            commandMap.register("", new ReloadCommand());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private class ReloadCommand implements CommandExecutor {
+        @Override
+        public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+            if (label.equalsIgnoreCase("lmc") && args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+                if (sender.hasPermission("lmc.reload")) {
+                    reloadConfig();
+                    sender.sendMessage(ChatColor.GREEN + "插件配置重载成功！");
+                    return true;
+                } else {
+                    sender.sendMessage(ChatColor.RED + "你没有权限执行此命令。");
+                }
+            }
+            return false;
+        }
     }
 
     private void setupScoreboard(Player player) {
-        ScoreboardManager scoreboardManager = Bukkit.getScoreboardManager();
-        Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
-        Objective objective = scoreboard.registerNewObjective("display", "dummy");
-        objective.setDisplayName(getConfiguredDisplayName());
-        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
-
-        List<String> rows = config.getStringList("scoreboard.rows");
-        for (int i = 0; i < rows.size(); i++) {
-            String row = rows.get(i);
-            objective.getScore(row).setScore(rows.size() - i);
-        }
-
-        playerScoreboards.put(player, scoreboard);
-        player.setScoreboard(scoreboard);
-    }
-
-    private String getConfiguredDisplayName() {
-        return ChatColor.translateAlternateColorCodes('&', config.getString("scoreboard.display-name", "Scoreboard"));
+        // 与上一示例相同
     }
 
     @Override
     public void onDisable() {
-        playerScoreboards.forEach((player, scoreboard) -> player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard()));
-    }
-
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        setupScoreboard(event.getPlayer());
-    }
-
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        playerScoreboards.remove(event.getPlayer());
+        // 与上一示例相同
     }
 }
-```
-
-### 步骤 5: 配置文件
-
-在你的插件目录中，应有一个`config.yml`文件，包含以下内容：
-
-```yml
-scoreboard:
-  display-name: "&aScoreboard"
-  rows:
-    - "&eHello Player"
-    - "&cYour Score: &f0"
-    - "&9Total Players: &f%online_players%/%max_players%"
