@@ -1,39 +1,63 @@
+
+
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.scoreboard.*;
 
-import java.io.File;
+public class Lmcboard extends JavaPlugin implements Listener {
 
-public class CustomScoreboard extends JavaPlugin implements Listener {
-
-    private YamlConfiguration config;
+    private ScoreboardManager scoreboardManager;
+    private Scoreboard scoreboard;
+    private Objective objective;
 
     @Override
     public void onEnable() {
-        saveDefaultConfig(); // Save default config.yml
-        File file = new File(getDataFolder(), "config.yml");
-        config = YamlConfiguration.loadConfiguration(file);
-        Bukkit.getPluginManager().registerEvents(this, this);
+        // 初始化ScoreboardManager
+        scoreboardManager = Bukkit.getScoreboardManager();
+        scoreboard = scoreboardManager.getNewScoreboard();
+
+        // 创建Objective
+        objective = scoreboard.registerNewObjective("", "dummy");
+        objective.setDisplayName(ChatColor.AQUA + "猫猫星球｜Lunchmc");
+        objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        // 注册事件监听器（自身）
+        getServer().getPluginManager().registerEvents(this, this);
+
+        // 设置所有现有玩家的计分板
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Score score = objective.getScore(player.getName());
+            score.setScore(1); // 设置初始分数
+            player.setScoreboard(scoreboard);
+        }
     }
 
     @Override
     public void onDisable() {
-        // Save data if necessary
-    }
-
-    @EventHandler
-    public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        String command = event.getMessage().toLowerCase();
-        if (command.startsWith("/lmc reload")) {
-            // Check if the command is /lmc reload
-            config = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml"));
-            event.getPlayer().sendMessage("插件配置已重载");
-            event.setCancelled(true); // Prevent the command from being processed further
+        // 清理资源
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         }
     }
 
-    // Additional methods for your scoreboard plugin...
+    // 事件处理
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        Score score = objective.getScore(player.getName());
+        score.setScore(1); // 设置初始分数
+        player.setScoreboard(scoreboard);
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+    }
 }
