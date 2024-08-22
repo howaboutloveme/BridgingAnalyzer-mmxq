@@ -1,4 +1,13 @@
-package mmxq.lunchmc;import org.bukkit.plugin.java.JavaPlugin;import java.util.Objects;public final class Lunchmc extends JavaPlugin {    @Override    public void onEnable() {        // Plugin startup logic        getLogger().info("猫猫星球插件启动成功");        regCommands();    }    @Override    public void onDisable() {        // Plugin shutdown logic        getLogger().info("猫猫星球插件关闭了");    }private void regCommands(){        getCommand("mmxq").setExecutor(new commands());}}package
+package mmxq.lunchmc;
+import org.bukkit.plugin.java.JavaPlugin;
+import java.util.Objects;public final class Lunchmc extends JavaPlugin {    
+@Override    
+public void onEnable() {
+        // Plugin startup logic        
+getLogger().info("猫猫星球插件启动成功");        regCommands();    }    
+@Override    public void onDisable() {        // Plugin shutdown logic        getLogger().info("猫猫星球插件关闭了");    }
+private void regCommands({   
+     getCommand("mmxq").setExecutor(new commands());}}package
 
 
 
