@@ -1,71 +1,39 @@
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scoreboard.*;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-public class CustomScoreboard extends JavaPlugin {
+public class CustomScoreboard extends JavaPlugin implements Listener {
 
-    private Map<Player, Scoreboard> playerScoreboards = new HashMap<>();
-    private FileConfiguration config;
-    private File dataFolder;
+    private YamlConfiguration config;
 
     @Override
     public void onEnable() {
-        dataFolder = getDataFolder();
-        saveDefaultConfig();
-        config = YamlConfiguration.loadConfiguration(new File(dataFolder, "config.yml"));
-        registerCustomCommand("lmc reload");
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            setupScoreboard(player);
-        }
-    }
-
-    private void registerCustomCommand(String command) {
-        try {
-            Field commandMapField = Bukkit.getPluginManager().getClass().getDeclaredField("commandMap");
-            commandMapField.setAccessible(true);
-            CommandMap commandMap = (CommandMap) commandMapField.get(Bukkit.getPluginManager());
-            commandMap.register("", new ReloadCommand());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private class ReloadCommand implements CommandExecutor {
-        @Override
-        public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-            if (label.equalsIgnoreCase("lmc") && args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-                if (sender.hasPermission("lmc.reload")) {
-                    reloadConfig();
-                    sender.sendMessage(ChatColor.GREEN + "插件配置重载成功！");
-                    return true;
-                } else {
-                    sender.sendMessage(ChatColor.RED + "你没有权限执行此命令。");
-                }
-            }
-            return false;
-        }
-    }
-
-    private void setupScoreboard(Player player) {
-        // 与上一示例相同
+        saveDefaultConfig(); // Save default config.yml
+        File file = new File(getDataFolder(), "config.yml");
+        config = YamlConfiguration.loadConfiguration(file);
+        Bukkit.getPluginManager().registerEvents(this, this);
     }
 
     @Override
     public void onDisable() {
-        // 与上一示例相同
+        // Save data if necessary
     }
+
+    @EventHandler
+    public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
+        String command = event.getMessage().toLowerCase();
+        if (command.startsWith("/lmc reload")) {
+            // Check if the command is /lmc reload
+            config = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml"));
+            event.getPlayer().sendMessage("插件配置已重载");
+            event.setCancelled(true); // Prevent the command from being processed further
+        }
+    }
+
+    // Additional methods for your scoreboard plugin...
 }
