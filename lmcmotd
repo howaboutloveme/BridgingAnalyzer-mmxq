@@ -1,0 +1,55 @@
+
+
+
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.command.CommandEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class LmcMotd extends JavaPlugin implements Listener {
+
+    private String currentMotd = null;
+
+    @Override
+    public void onEnable() {
+        // Register the plugin as a listener
+        getServer().getPluginManager().registerEvents(this, this);
+    }
+
+    @EventHandler
+    public void onCommandEvent(CommandEvent event) {
+        // Check if the command is "lmcmotd"
+        if (event.getName().equalsIgnoreCase("lmcmotd")) {
+            CommandSender sender = event.getSender();
+            String[] args = event.getArgs();
+            if (args.length < 1) {
+                // If no arguments are provided, show the current MOTD
+                if (currentMotd == null) {
+                    // No MOTD has been set yet
+                    sender.sendMessage("当前服务器MOTD尚未设置.");
+                } else {
+                    sender.sendMessage("当前服务器MOTD: " + currentMotd);
+                }
+            } else {
+                // Set the new MOTD
+                currentMotd = String.join(" ", args);
+                updateServerMotd(currentMotd);
+                sender.sendMessage("服务器MOTD已更改为: " + currentMotd);
+            }
+            // Prevent the command from being processed further
+            event.setCancelled(true);
+        }
+    }
+
+    private void updateServerMotd(String newMotd) {
+        // Update the server's MOTD
+        // This might depend on the specific implementation of your server software
+        // For Paper, you might need to use a different method
+        // This is a placeholder for the actual implementation
+        System.out.println("MOTD updated to: " + newMotd);
+        // You might want to use a method like this:
+        // getServer().getServerList().setMotd(newMotd);
+    }
+}
