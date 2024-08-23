@@ -109,4 +109,17 @@ public class LmcCheat extends JavaPlugin implements Listener, CommandExecutor {
         }
     }
 
-    @EventHandler(priority = EventPriority.MON
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerMove(PlayerMoveEvent event) {
+        if (checkAimbot(event.getPlayer())) {
+            registerViolation(event.getPlayer(), "Aimbot");
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
+        if (checkFly(event.getPlayer())) {
+            registerViolation(event.getPlayer(), "Fly");
+        }
+    }
+}
