@@ -1,51 +1,57 @@
-package com.example.lmcmotd;
-
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.command.CommandEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.spigotmc.event.server.MotdInfoUpdateEvent;
-import org.bukkit.ChatColor;
 
-public class LmcMotd extends JavaPlugin implements Listener {
+import java.io.File;
+
+public class MotdPlugin extends JavaPlugin implements Listener {
+
+    private FileConfiguration config;
 
     @Override
     public void onEnable() {
-        // Register this plugin as a listener for command events
+        // 创建配置文件
+        this.saveDefaultConfig();
+        config = this.getConfig();
+
+        // 读取配置文件并设置MOTD
+        // 注意：MOTD在首次插件启动时设置，后续变动需玩家加入事件触发
+        String motd = getMotd();
+        if (motd != null) {
+            Bukkit.getServer().setMotd(motd);
+        }
+
+        // 注册事件监听
         getServer().getPluginManager().registerEvents(this, this);
     }
 
     @EventHandler
-    public void onCommandEvent(CommandEvent event) {
-        Command command = event.getCommand();
-        String commandLabel = command.getLabel();
-        if (commandLabel.equalsIgnoreCase("lmcmotd")) {
-            event.setCancelled(true); // Cancel the command execution
-            CommandSender sender = event.getSender();
-            if (sender.hasPermission("lmcmotd.command")) {
-                // Change the server MOTD
-                changeMotd(sender);
-            } else {
-                sender.sendMessage(ChatColor.RED + "你没有权限使用此命令!");
-            }
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        // 每次玩家加入时，重新读取并设置MOTD
+        String motd = getMotd();
+        if (motd != null) {
+            Bukkit.getServer().setMotd(motd);
         }
     }
 
-    private void changeMotd(CommandSender sender) {
-        // Set the new MOTD with color codes
-        String motd = ChatColor.RED + "服务器" + "\n" + ChatColor.YELLOW + "欢迎游玩";
-        // Update the MOTD
-        updateMotd(motd);
-        // Inform the sender
-        sender.sendMessage(ChatColor.GREEN + "服务器的MOTD已更新!");
-    }
-
-    // Function to update the MOTD
-    private void updateMotd(String motd) {
-        // Paper specific way to update MOTD
-        MotdInfoUpdateEvent motdEvent = new MotdInfoUpdateEvent(null, motd, null);
-        getServer().getPluginManager().callEvent(motdEvent);
+    private String getMotd() {
+        String firstLine = ChatColor.RED + config.getString("motd.firstLine", "红色服务器");
+        String secondLine = ChatColor.YELLOW + config.getString("motd.secondLine", "黄色欢迎游玩");
+        return firstLine + "\n" + secondLine;
     }
 }
+```
+
+### 创建默认配置文件
+
+默认配置文件`config.yml`将如下所示：
+
+```yaml
+motd:
+  firstLine: 红色服务器
+  secondLine: 黄色欢迎游玩
