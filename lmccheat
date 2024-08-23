@@ -4,9 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,84 +19,83 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class LmcCheat extends JavaPlugin implements Listener, CommandExecutor {
+public class LmcCheat extends JavaPlugin implements Listener {
 
+    // 违规计数器
     private final Map<UUID, Integer> violationCounts = new HashMap<>();
+    // 最近一次违规时间记录
     private final Map<UUID, Long> lastViolationTime = new HashMap<>();
+    // 违规阈值（10次违规后触发封禁）
     private final int violationThreshold = 10;
+    // 封禁持续时间（5分钟）
     private final long banDuration = 300000; // 5 minutes in milliseconds
 
     @Override
     public void onEnable() {
+        // 注册事件监听器
         getServer().getPluginManager().registerEvents(this, this);
-        getCommand("check").setExecutor(this); // Command for checking player's violations
-        saveDefaultConfig();
     }
 
-    // Check command to see a player's violation count
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("check") && args.length == 1) {
-            Player player = Bukkit.getPlayer(args[0]);
-            if (player != null) {
-                int count = violationCounts.getOrDefault(player.getUniqueId(), 0);
-                sender.sendMessage("玩家 " + player.getName() + " 的违规次数: " + count);
-            } else {
-                sender.sendMessage("玩家 " + args[0] + " 不在线或不存在.");
-            }
-        }
-        return true;
-    }
-
-    // Check for Reach cheating
+    // 检查Reach作弊
     private boolean checkReach(Player player) {
-        Block targetBlock = player.getTargetBlockExact(10); // Assuming a max reach of 10 blocks
+        Block targetBlock = player.getTargetBlockExact(10); // 假设最大攻击距离为10格
         if (targetBlock != null && targetBlock.getType() != Material.AIR) {
             Location targetLocation = targetBlock.getLocation();
             Vector distance = targetLocation.toVector().subtract(player.getLocation().toVector());
-            return distance.length() > 5; // Assuming a max reach of 5 blocks for simplicity
+            // 如果攻击距离超过5格，视为违规
+            return distance.length() > 5;
         }
         return false;
     }
 
-    // Check for Aimbot cheating
+    // 检查Aimbot作弊
     private boolean checkAimbot(Player player) {
-        // Simplified logic: check if player's yaw changes rapidly without moving
+        // 简化逻辑：检查玩家的yaw是否在没有移动的情况下快速变化
         Location currentLoc = player.getLocation();
-        if (currentLoc.getYaw() != lastViolationTime.containsKey(player.getUniqueId()) ? lastViolationTime.get(player.getUniqueId()) : 0) {
+        if (lastViolationTime.containsKey(player.getUniqueId())) {
+            if (Math.abs(currentLoc.getYaw() - lastViolationTime.get(player.getUniqueId())) > 10) {
+                // 更新最近一次违规时间
+                lastViolationTime.put(player.getUniqueId(), currentLoc.getYaw());
+                return true;
+            }
+        } else {
+            // 初始化最近一次违规时间
             lastViolationTime.put(player.getUniqueId(), currentLoc.getYaw());
-            return true;
         }
         return false;
     }
 
-    // Check for Fly cheating
+    // 检查Fly作弊
     private boolean checkFly(Player player) {
         Vector velocity = player.getVelocity();
-        return velocity.getY() > 0.1 && !player.isOnGround(); // Assuming a velocity threshold for flying
+        // 如果向上的速度超过阈值，并且玩家不在地上，视为违规
+        return velocity.getY() > 0.1 && !player.isOnGround();
     }
 
-    // Register a violation and handle bans
+    // 处理违规行为
     private void registerViolation(Player player, String violationType) {
         UUID uuid = player.getUniqueId();
         Integer count = violationCounts.get(uuid);
         if (count == null) {
+            // 如果是第一次违规，初始化计数
             violationCounts.put(uuid, 1);
         } else {
+            // 如果不是第一次违规，增加计数
             violationCounts.put(uuid, count + 1);
         }
-        // Notify admins
+        // 通知管理员
         Bukkit.getLogger().info("警告: 玩家 " + player.getName() + " 检测到 " + violationType);
-        // Ban player if threshold is reached
+        // 如果达到违规阈值，执行封禁
         if (violationCounts.get(uuid) >= violationThreshold) {
             Bukkit.broadcastMessage("封禁通知: 玩家 " + player.getName() + " 因多次 " + violationType + " 被封禁.");
-            // Execute ban
+            // 执行封禁
             player.kickPlayer("违规封禁: 多次使用 " + violationType);
-            // Reset violation count for this player
+            // 重置该玩家的违规计数
             violationCounts.remove(uuid);
         }
     }
 
+    // 监听玩家与方块交互事件
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
@@ -109,6 +105,7 @@ public class LmcCheat extends JavaPlugin implements Listener, CommandExecutor {
         }
     }
 
+    // 监听玩家移动事件
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (checkAimbot(event.getPlayer())) {
@@ -116,6 +113,7 @@ public class LmcCheat extends JavaPlugin implements Listener, CommandExecutor {
         }
     }
 
+    // 监听玩家飞行切换事件
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerToggleFlight(PlayerToggleFlightEvent event) {
         if (checkFly(event.getPlayer())) {
