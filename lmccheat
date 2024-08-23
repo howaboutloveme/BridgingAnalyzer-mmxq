@@ -1,0 +1,112 @@
+package com.example.lmccheat;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+public class LmcCheat extends JavaPlugin implements Listener, CommandExecutor {
+
+    private final Map<UUID, Integer> violationCounts = new HashMap<>();
+    private final Map<UUID, Long> lastViolationTime = new HashMap<>();
+    private final int violationThreshold = 10;
+    private final long banDuration = 300000; // 5 minutes in milliseconds
+
+    @Override
+    public void onEnable() {
+        getServer().getPluginManager().registerEvents(this, this);
+        getCommand("check").setExecutor(this); // Command for checking player's violations
+        saveDefaultConfig();
+    }
+
+    // Check command to see a player's violation count
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (cmd.getName().equalsIgnoreCase("check") && args.length == 1) {
+            Player player = Bukkit.getPlayer(args[0]);
+            if (player != null) {
+                int count = violationCounts.getOrDefault(player.getUniqueId(), 0);
+                sender.sendMessage("玩家 " + player.getName() + " 的违规次数: " + count);
+            } else {
+                sender.sendMessage("玩家 " + args[0] + " 不在线或不存在.");
+            }
+        }
+        return true;
+    }
+
+    // Check for Reach cheating
+    private boolean checkReach(Player player) {
+        Block targetBlock = player.getTargetBlockExact(10); // Assuming a max reach of 10 blocks
+        if (targetBlock != null && targetBlock.getType() != Material.AIR) {
+            Location targetLocation = targetBlock.getLocation();
+            Vector distance = targetLocation.toVector().subtract(player.getLocation().toVector());
+            return distance.length() > 5; // Assuming a max reach of 5 blocks for simplicity
+        }
+        return false;
+    }
+
+    // Check for Aimbot cheating
+    private boolean checkAimbot(Player player) {
+        // Simplified logic: check if player's yaw changes rapidly without moving
+        Location currentLoc = player.getLocation();
+        if (currentLoc.getYaw() != lastViolationTime.containsKey(player.getUniqueId()) ? lastViolationTime.get(player.getUniqueId()) : 0) {
+            lastViolationTime.put(player.getUniqueId(), currentLoc.getYaw());
+            return true;
+        }
+        return false;
+    }
+
+    // Check for Fly cheating
+    private boolean checkFly(Player player) {
+        Vector velocity = player.getVelocity();
+        return velocity.getY() > 0.1 && !player.isOnGround(); // Assuming a velocity threshold for flying
+    }
+
+    // Register a violation and handle bans
+    private void registerViolation(Player player, String violationType) {
+        UUID uuid = player.getUniqueId();
+        Integer count = violationCounts.get(uuid);
+        if (count == null) {
+            violationCounts.put(uuid, 1);
+        } else {
+            violationCounts.put(uuid, count + 1);
+        }
+        // Notify admins
+        Bukkit.getLogger().info("警告: 玩家 " + player.getName() + " 检测到 " + violationType);
+        // Ban player if threshold is reached
+        if (violationCounts.get(uuid) >= violationThreshold) {
+            Bukkit.broadcastMessage("封禁通知: 玩家 " + player.getName() + " 因多次 " + violationType + " 被封禁.");
+            // Execute ban
+            player.kickPlayer("违规封禁: 多次使用 " + violationType);
+            // Reset violation count for this player
+            violationCounts.remove(uuid);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            if (checkReach(event.getPlayer())) {
+                registerViolation(event.getPlayer(), "Reach");
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MON
