@@ -4,7 +4,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.*;
 
@@ -13,65 +13,68 @@ import java.util.Map;
 
 public class CatPlanetScoreboard extends JavaPlugin implements Listener {
 
+    // Initialize scoreboard, objective, and a map to keep track of teams.
     private Scoreboard board;
     private Objective obj;
     private Map<String, Team> teams = new HashMap<>();
+    
+    // These strings will hold the title and content for the scoreboard, loaded from the config.
     private String title;
     private String content;
 
     @Override
     public void onEnable() {
+        // Save the default config if it doesn't exist.
         saveDefaultConfig();
-        reloadConfig(); // Load initial config
+        
+        // Reload the config to initialize the title and content.
+        reloadConfig();
+        
+        // Setup the scoreboard and register this plugin as a listener for events.
         setupScoreboard();
         Bukkit.getPluginManager().registerEvents(this, this);
+        
+        // Register a listener for when players join to automatically add them to the scoreboard.
+        // Note: This is a new addition, as the original code did not handle PlayerJoinEvent.
+        getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
     }
 
-    @Override
-    public void onDisable() {
-        // Cleanup if necessary
-    }
-
+    // This method sets up the scoreboard, objective, and team.
     private void setupScoreboard() {
         board = Bukkit.getScoreboardManager().getNewScoreboard();
         obj = board.registerNewObjective("catPlanet", "dummy");
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-        obj.setDisplayName(title); // Use the title from the config
+        obj.setDisplayName(title); // Set the display name of the objective based on the title from the config.
 
+        // Register a new team and set its prefix based on the content from the config.
         Team team = board.registerNewTeam("teamWelcome");
-        team.setPrefix(content); // Use the content from the config
-
+        team.setPrefix(content);
+        
         teams.put("teamWelcome", team);
 
+        // Iterate through all online players, add them to the team, and set their scoreboard to the new one.
         Bukkit.getOnlinePlayers().forEach(player -> {
             team.addEntry(player.getName());
             player.setScoreboard(board);
         });
     }
 
-    @EventHandler
-    public void onCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        String command = event.getMessage().toLowerCase();
-        if (command.startsWith("/lmcboard reload")) {
-            reloadConfig();
-            setupScoreboard();
-            event.getPlayer().sendMessage(ChatColor.GREEN + "计分板配置已重载！");
-            event.setCancelled(true); // Prevent the command from being processed further
-        }
-    }
-
+    // This method reloads the configuration and sets the title and content based on the config.
     private void reloadConfig() {
         this.title = getConfig().getString("scoreboard.title", "猫猫星球");
         this.content = getConfig().getString("scoreboard.content", "欢迎游玩");
     }
+
+    // New listener class to handle PlayerJoinEvent.
+    private class PlayerJoinListener implements Listener {
+        @EventHandler
+        public void onPlayerJoin(PlayerJoinEvent event) {
+            // When a player joins, add them to the team and set their scoreboard to the plugin's scoreboard.
+            Team team = teams.get("teamWelcome");
+            if (team != null) {
+                team.addEntry(event.getPlayer().getName());
+                event.getPlayer().setScoreboard(board);
+            }
+        }
+    }
 }
-```
-
-### 第二步：配置文件
-
-在插件的根目录下创建`config.yml`文件，用于存储计分板的标题和内容。
-
-```yaml
-scoreboard:
-  title: "猫猫星球"
-  content: "欢迎游玩"
