@@ -1,5 +1,4 @@
-
-
+package com.example.lmcmotd;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -7,49 +6,46 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.command.CommandEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.spigotmc.event.server.MotdInfoUpdateEvent;
+import org.bukkit.ChatColor;
 
 public class LmcMotd extends JavaPlugin implements Listener {
 
-    private String currentMotd = null;
-
     @Override
     public void onEnable() {
-        // Register the plugin as a listener
+        // Register this plugin as a listener for command events
         getServer().getPluginManager().registerEvents(this, this);
     }
 
     @EventHandler
     public void onCommandEvent(CommandEvent event) {
-        // Check if the command is "lmcmotd"
-        if (event.getName().equalsIgnoreCase("lmcmotd")) {
+        Command command = event.getCommand();
+        String commandLabel = command.getLabel();
+        if (commandLabel.equalsIgnoreCase("lmcmotd")) {
+            event.setCancelled(true); // Cancel the command execution
             CommandSender sender = event.getSender();
-            String[] args = event.getArgs();
-            if (args.length < 1) {
-                // If no arguments are provided, show the current MOTD
-                if (currentMotd == null) {
-                    // No MOTD has been set yet
-                    sender.sendMessage("当前服务器MOTD尚未设置.");
-                } else {
-                    sender.sendMessage("当前服务器MOTD: " + currentMotd);
-                }
+            if (sender.hasPermission("lmcmotd.command")) {
+                // Change the server MOTD
+                changeMotd(sender);
             } else {
-                // Set the new MOTD
-                currentMotd = String.join(" ", args);
-                updateServerMotd(currentMotd);
-                sender.sendMessage("服务器MOTD已更改为: " + currentMotd);
+                sender.sendMessage(ChatColor.RED + "你没有权限使用此命令!");
             }
-            // Prevent the command from being processed further
-            event.setCancelled(true);
         }
     }
 
-    private void updateServerMotd(String newMotd) {
-        // Update the server's MOTD
-        // This might depend on the specific implementation of your server software
-        // For Paper, you might need to use a different method
-        // This is a placeholder for the actual implementation
-        System.out.println("MOTD updated to: " + newMotd);
-        // You might want to use a method like this:
-        // getServer().getServerList().setMotd(newMotd);
+    private void changeMotd(CommandSender sender) {
+        // Set the new MOTD with color codes
+        String motd = ChatColor.RED + "服务器" + "\n" + ChatColor.YELLOW + "欢迎游玩";
+        // Update the MOTD
+        updateMotd(motd);
+        // Inform the sender
+        sender.sendMessage(ChatColor.GREEN + "服务器的MOTD已更新!");
+    }
+
+    // Function to update the MOTD
+    private void updateMotd(String motd) {
+        // Paper specific way to update MOTD
+        MotdInfoUpdateEvent motdEvent = new MotdInfoUpdateEvent(null, motd, null);
+        getServer().getPluginManager().callEvent(motdEvent);
     }
 }
