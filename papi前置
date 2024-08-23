@@ -1,0 +1,95 @@
+<repositories>
+    <repository>
+        <id>spigot-repo</id>
+        <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+    </repository>
+</repositories>
+
+<!-- Other dependencies -->
+
+<dependencies>
+    <!-- Other dependencies -->
+    <dependency>
+        <groupId>me.clip</groupId>
+        <artifactId>placeholderapi</artifactId>
+        <version>2.10.9</version> <!-- 请使用最新版本 -->
+    </dependency>
+</dependencies>
+
+
+
+
+
+```
+
+### 步骤 2: 激活PlaceholderAPI
+
+在你的插件主类中添加以下代码：
+
+```java
+import me.clip.placeholderapi.PlaceholderAPIPlugin;
+import me.clip.placeholderapi.PlaceholderAPI;
+import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+
+public class YourPlugin extends JavaPlugin {
+
+    private static YourPlugin instance;
+
+    @Override
+    public void onEnable() {
+        instance = this;
+        
+        // 检查并加载 PlaceholderAPI
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            PlaceholderAPIPlugin plapi = (PlaceholderAPIPlugin) Bukkit.getPluginManager().getPlugin("PlaceholderAPI");
+
+            // 注册自定义占位符
+            plapi.registerExpansion(new YourExpansion());
+        }
+    }
+
+    // 自定义占位符扩展类
+    private static class YourExpansion extends PlaceholderExpansion {
+        @Override
+        public String getIdentifier() {
+            return "your_plugin_identifier";
+        }
+
+        @Override
+        public String getAuthor() {
+            return "Your Name";
+        }
+
+        @Override
+        public String getVersion() {
+            return "1.0";
+        }
+
+        @Override
+        public boolean persist() {
+            return true;
+        }
+
+        @Override
+        public boolean canRegister() {
+            return true;
+        }
+
+        @Override
+        public String onPlaceholderRequest(Player player, String params) {
+            // 这里添加你的逻辑，例如返回玩家的击杀数
+            if (params.equals("player_kills")) {
+                return String.valueOf(instance.getPlayerKills(player));
+            }
+
+            return null;
+        }
+
+    }
+
+    // 这里添加你的方法，例如获取玩家的击杀数
+    public int getPlayerKills(Player player) {
+        // 实现你的逻辑
+        return 0;
+    }
+}
