@@ -13,63 +13,54 @@ import java.util.Map;
 
 public class CatPlanetScoreboard extends JavaPlugin implements Listener {
 
-    // Initialize scoreboard, objective, and a map to keep track of teams.
+    // 初始化分数板、目标、以及一个Map来跟踪队伍
     private Scoreboard board;
     private Objective obj;
     private Map<String, Team> teams = new HashMap<>();
     
-    // These strings will hold the title and content for the scoreboard, loaded from the config.
-    private String title;
-    private String content;
+    // 定义分数板的标题和内容
+    private String title = "猫猫星球";
+    private String content = "欢迎游玩";
 
     @Override
     public void onEnable() {
-        // Save the default config if it doesn't exist.
-        saveDefaultConfig();
-        
-        // Reload the config to initialize the title and content.
-        reloadConfig();
-        
-        // Setup the scoreboard and register this plugin as a listener for events.
+        // 设置分数板和注册事件监听
         setupScoreboard();
+        // 注册这个插件为事件监听者
         Bukkit.getPluginManager().registerEvents(this, this);
-        
-        // Register a listener for when players join to automatically add them to the scoreboard.
-        // Note: This is a new addition, as the original code did not handle PlayerJoinEvent.
+
+        // 注册一个监听器，当玩家加入时自动将他们添加到分数板
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
     }
 
-    // This method sets up the scoreboard, objective, and team.
+    // 这个方法设置分数板、目标、和队伍
     private void setupScoreboard() {
         board = Bukkit.getScoreboardManager().getNewScoreboard();
+        // 创建一个目标，类型为"dummy"，因为分数板不会展示实际的得分
         obj = board.registerNewObjective("catPlanet", "dummy");
+        // 设置目标的显示位置和显示的名称
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-        obj.setDisplayName(title); // Set the display name of the objective based on the title from the config.
+        obj.setDisplayName(title);
 
-        // Register a new team and set its prefix based on the content from the config.
+        // 创建一个新队伍，并设置前缀
         Team team = board.registerNewTeam("teamWelcome");
         team.setPrefix(content);
-        
+
+        // 将队伍添加到Map
         teams.put("teamWelcome", team);
 
-        // Iterate through all online players, add them to the team, and set their scoreboard to the new one.
+        // 遍历所有在线玩家，添加到队伍，并设置他们的分数板为新分数板
         Bukkit.getOnlinePlayers().forEach(player -> {
             team.addEntry(player.getName());
             player.setScoreboard(board);
         });
     }
 
-    // This method reloads the configuration and sets the title and content based on the config.
-    private void reloadConfig() {
-        this.title = getConfig().getString("scoreboard.title", "猫猫星球");
-        this.content = getConfig().getString("scoreboard.content", "欢迎游玩");
-    }
-
-    // New listener class to handle PlayerJoinEvent.
+    // 新监听器类，用于处理PlayerJoinEvent
     private class PlayerJoinListener implements Listener {
         @EventHandler
         public void onPlayerJoin(PlayerJoinEvent event) {
-            // When a player joins, add them to the team and set their scoreboard to the plugin's scoreboard.
+            // 当玩家加入时，将他们添加到队伍中，并设置其分数板为插件的分数板
             Team team = teams.get("teamWelcome");
             if (team != null) {
                 team.addEntry(event.getPlayer().getName());
