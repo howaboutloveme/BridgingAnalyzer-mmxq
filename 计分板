@@ -24,47 +24,62 @@ public class CatPlanetScoreboard extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        // 设置分数板和注册事件监听
         setupScoreboard();
-        // 注册这个插件为事件监听者
         Bukkit.getPluginManager().registerEvents(this, this);
-
-        // 注册一个监听器，当玩家加入时自动将他们添加到分数板
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(), this);
     }
 
     // 这个方法设置分数板、目标、和队伍
     private void setupScoreboard() {
         board = Bukkit.getScoreboardManager().getNewScoreboard();
-        // 创建一个目标，类型为"dummy"，因为分数板不会展示实际的得分
         obj = board.registerNewObjective("catPlanet", "dummy");
-        // 设置目标的显示位置和显示的名称
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
         obj.setDisplayName(title);
 
-        // 创建一个新队伍，并设置前缀
         Team team = board.registerNewTeam("teamWelcome");
         team.setPrefix(content);
-
-        // 将队伍添加到Map
         teams.put("teamWelcome", team);
 
-        // 遍历所有在线玩家，添加到队伍，并设置他们的分数板为新分数板
         Bukkit.getOnlinePlayers().forEach(player -> {
             team.addEntry(player.getName());
             player.setScoreboard(board);
         });
+
+        // 初始化分数板内容
+        updateScoreboard();
+    }
+
+    // 更新分数板显示的内容
+    private void updateScoreboard() {
+        // 清除旧的行
+        for (int i = 15; i >= 1; i--) {
+            obj.getScore(ChatColor.DARK_GRAY + " ").setScore(i);
+        }
+
+        // 添加新行
+        addScoreboardLine("欢迎来到猫猫星球！", 15);
+        addScoreboardLine("开始你的冒险吧！", 14);
+        addScoreboardLine("收集资源，建立基地！", 13);
+        addScoreboardLine("与怪物战斗，保护你的家园！", 12);
+        addScoreboardLine("与其他玩家互动和交易！", 11);
+    }
+
+    // 添加行到分数板
+    private void addScoreboardLine(String text, int position) {
+        Score score = obj.getScore(ChatColor.AQUA + text);
+        score.setScore(position);
     }
 
     // 新监听器类，用于处理PlayerJoinEvent
     private class PlayerJoinListener implements Listener {
         @EventHandler
         public void onPlayerJoin(PlayerJoinEvent event) {
-            // 当玩家加入时，将他们添加到队伍中，并设置其分数板为插件的分数板
             Team team = teams.get("teamWelcome");
             if (team != null) {
                 team.addEntry(event.getPlayer().getName());
                 event.getPlayer().setScoreboard(board);
+                // 每次有玩家加入时更新分数板
+                updateScoreboard();
             }
         }
     }
