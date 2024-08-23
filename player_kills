@@ -1,0 +1,49 @@
+import org.bukkit.Bukkit;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+public class PlayerKillsPlugin extends JavaPlugin implements Listener {
+
+    private Map<UUID, Integer> playerKills = new HashMap<>();
+
+    @Override
+    public void onEnable() {
+        // 注册监听器
+        Bukkit.getPluginManager().registerEvents(this, this);
+    }
+
+    @Override
+    public void onDisable() {
+        // 保存数据，如果你使用的是持久化存储
+    }
+
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        // 获取被击杀的玩家
+        UUID killedPlayerUUID = event.getEntity().getUniqueId();
+
+        // 遍历死亡事件中的致死者，获取真正的击杀者
+        for (org.bukkit.entity.Entity damager : event.getEntity().getKiller().getRecentDamageCausers()) {
+            if (damager instanceof org.bukkit.entity.Player) {
+                org.bukkit.entity.Player killer = (org.bukkit.entity.Player) damager;
+                // 增加击杀数
+                increasePlayerKills(killer.getUniqueId());
+                break;
+            }
+        }
+    }
+
+    public void increasePlayerKills(UUID playerUUID) {
+        playerKills.put(playerUUID, playerKills.getOrDefault(playerUUID, 0) + 1);
+    }
+
+    public int getPlayerKills(UUID playerUUID) {
+        return playerKills.getOrDefault(playerUUID, 0);
+    }
+}
