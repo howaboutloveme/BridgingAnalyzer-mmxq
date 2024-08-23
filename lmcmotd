@@ -1,57 +1,60 @@
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-
-public class MotdPlugin extends JavaPlugin implements Listener {
-
-    private FileConfiguration config;
+public class MotdPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // 创建配置文件
-        this.saveDefaultConfig();
-        config = this.getConfig();
-
-        // 读取配置文件并设置MOTD
-        // 注意：MOTD在首次插件启动时设置，后续变动需玩家加入事件触发
-        String motd = getMotd();
-        if (motd != null) {
-            Bukkit.getServer().setMotd(motd);
-        }
-
-        // 注册事件监听
-        getServer().getPluginManager().registerEvents(this, this);
+        // 设置MOTD
+        setMotd();
     }
 
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        // 每次玩家加入时，重新读取并设置MOTD
-        String motd = getMotd();
-        if (motd != null) {
-            Bukkit.getServer().setMotd(motd);
-        }
-    }
-
-    private String getMotd() {
-        String firstLine = ChatColor.RED + config.getString("motd.firstLine", "红色服务器");
-        String secondLine = ChatColor.YELLOW + config.getString("motd.secondLine", "黄色欢迎游玩");
-        return firstLine + "\n" + secondLine;
+    private void setMotd() {
+        String motd = ChatColor.RED + "服务器\n" + ChatColor.YELLOW + "欢迎游玩";
+        Bukkit.getServer().setMotd(motd);
     }
 }
 ```
 
-### 创建默认配置文件
+### 代码解释：
 
-默认配置文件`config.yml`将如下所示：
+- **onEnable() 方法**：这是插件加载时会调用的方法。在这里调用 `setMotd()` 方法来设置MOTD。
+- **setMotd() 方法**：在此方法中，定义了MOTD的样式。使用了 `ChatColor` 类来定义颜色。MOTD通过 `\n` 分割为两行，第一行是红色的"服务器"，第二行是黄色的"欢迎游玩"。然后使用 `Bukkit.getServer().setMotd(String)` 方法来设置服务器的MOTD。
 
-```yaml
-motd:
-  firstLine: 红色服务器
-  secondLine: 黄色欢迎游玩
+### 注意事项：
+
+1. **硬编码问题**：硬编码的MOTD在需要修改时不太方便，你必须编辑代码并重新编译插件。如果你希望MOTD可以被服务器管理员更改，那么使用配置文件或数据库是一个更好的选择。
+2. **多服务器环境**：如果你的服务器群集或使用BungeeCord，你可能需要额外的逻辑来确保MOTD正确设置到所有服务器上。
+
+### 扩展功能（可选）：
+
+如果你想在服务器重启或加载后也重新设置MOTD，你可以注册一个监听器，监听 `ServerReloadEvent` 或 `PluginEnableEvent`。
+
+```java
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.ServerReloadEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class MotdPlugin extends JavaPlugin implements Listener {
+
+    @Override
+    public void onEnable() {
+        setMotd();
+        // 注册监听器
+        getServer().getPluginManager().registerEvents(this, this);
+    }
+
+    private void setMotd() {
+        String motd = ChatColor.RED + "服务器\n" + ChatColor.YELLOW + "欢迎游玩";
+        Bukkit.getServer().setMotd(motd);
+    }
+
+    @EventHandler
+    public void onServerReload(ServerReloadEvent event) {
+        setMotd();
+    }
+}
