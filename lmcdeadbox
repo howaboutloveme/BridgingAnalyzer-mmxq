@@ -1,6 +1,7 @@
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,63 +12,55 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class DeathChestPlugin extends JavaPlugin implements Listener {
 
-    // 插件启用时调用
     @Override
     public void onEnable() {
-        // 注册事件监听器
+        // 注册监听器
         Bukkit.getPluginManager().registerEvents(this, this);
     }
 
-    // 插件停用时调用
     @Override
     public void onDisable() {
         // 清理资源或执行停用时的操作
     }
 
-    // 监听玩家死亡事件
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        Player player = event.getEntity(); // 获取死亡的玩家
-        Location deathLocation = player.getLocation(); // 获取玩家死亡的位置
+        Player player = event.getEntity();
+        Location deathLocation = player.getLocation();
+        Block deathBlock = deathLocation.getBlock();
 
-        // 检查死亡地点是否安全，确保可以放置箱子
-        if (isLocationSafe(deathLocation)) {
-            // 在死亡地点创建一个箱子
-            Chest chest = createChest(deathLocation);
-
-            // 将玩家物品转移到箱子
-            moveItemsToChest(player, chest);
-
+        if (isLocationSafeForChest(deathLocation)) {
             // 清空玩家背包
             clearPlayerInventory(player);
-        } else {
-            // 地点不安全，可以记录或警告
-            System.out.println("地点不安全，无法放置箱子.");
+            // 创建箱子
+            createChest(deathLocation);
+            // 将物品放入箱子
+            moveItemsToChest(player, deathBlock);
         }
     }
 
-    // 检查地点是否安全
-    private boolean isLocationSafe(Location location) {
-        // 检查玩家死亡位置下方的方块是否为空气，以判断是否可以安全放置箱子
-        return location.getBlock().getRelative(0, -1, 0).getType() == Material.AIR;
+    private boolean isLocationSafeForChest(Location location) {
+        // 检查箱子放置位置是否为空气，且下方为实心方块
+        Block potentialChest = location.getBlock().getRelative(0, -1, 0);
+        return potentialChest.getType() == Material.AIR && potentialChest.getRelative(0, 1, 0).getType().isSolid();
     }
 
-    // 在指定地点创建一个箱子
-    private Chest createChest(Location location) {
-        // 创建箱子并返回
-        Chest chest = (Chest) location.getBlock().getWorld().spawn(location, Chest.class);
-        return chest;
+    private void createChest(Location location) {
+        // 设置箱子方块
+        Block chestBlock = location.getBlock().getRelative(0, -1, 0);
+        chestBlock.setType(Material.CHEST);
     }
 
-    // 将玩家物品转移到箱子
-    private void moveItemsToChest(Player player, Chest chest) {
-        // 把玩家背包内的物品转移到箱子中
-        chest.getBlockInventory().setContents(player.getInventory().getContents());
+    private void moveItemsToChest(Player player, Block chestBlock) {
+        // 确保方块是箱子
+        if (chestBlock.getState() instanceof Chest) {
+            Chest chest = (Chest) chestBlock.getState();
+            chest.getBlockInventory().setContents(player.getInventory().getContents());
+        }
     }
 
-    // 清空玩家背包
     private void clearPlayerInventory(Player player) {
-        // 清空玩家的背包
+        // 清空玩家的物品栏
         player.getInventory().clear();
     }
 }
