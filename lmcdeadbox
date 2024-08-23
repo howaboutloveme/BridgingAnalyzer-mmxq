@@ -1,4 +1,3 @@
-// 导入必要的包
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -12,15 +11,17 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class DeathChestPlugin extends JavaPlugin implements Listener {
 
+    // 插件启用时调用
     @Override
     public void onEnable() {
-        // 当插件启用时，注册监听器
+        // 注册事件监听器
         Bukkit.getPluginManager().registerEvents(this, this);
     }
 
+    // 插件停用时调用
     @Override
     public void onDisable() {
-        // 当插件停用时的清理工作
+        // 清理资源或执行停用时的操作
     }
 
     // 监听玩家死亡事件
@@ -29,32 +30,44 @@ public class DeathChestPlugin extends JavaPlugin implements Listener {
         Player player = event.getEntity(); // 获取死亡的玩家
         Location deathLocation = player.getLocation(); // 获取玩家死亡的位置
 
-        // 检查位置是否安全，避免生成在空中或实体中
+        // 检查死亡地点是否安全，确保可以放置箱子
         if (isLocationSafe(deathLocation)) {
-            // 在玩家死亡的位置生成一个箱子
-            Chest chest = generateChest(deathLocation);
-            // 将玩家背包内的物品转移到箱子中
-            transferItemsToChest(chest, player);
+            // 在死亡地点创建一个箱子
+            Chest chest = createChest(deathLocation);
+
+            // 将玩家物品转移到箱子
+            moveItemsToChest(player, chest);
+
             // 清空玩家背包
-            player.getInventory().clear();
+            clearPlayerInventory(player);
+        } else {
+            // 地点不安全，可以记录或警告
+            System.out.println("地点不安全，无法放置箱子.");
         }
     }
 
-    // 检查位置是否安全
+    // 检查地点是否安全
     private boolean isLocationSafe(Location location) {
-        // 检查玩家死亡位置下方的方块是否为草地，以判断是否安全
-        return location.getBlock().getRelative(0, -1, 0).getType() == Material.GRASS_BLOCK;
+        // 检查玩家死亡位置下方的方块是否为空气，以判断是否可以安全放置箱子
+        return location.getBlock().getRelative(0, -1, 0).getType() == Material.AIR;
     }
 
-    // 在给定位置生成箱子
-    private Chest generateChest(Location location) {
-        Chest chest = (Chest) location.getWorld().spawn(location, Chest.class);
+    // 在指定地点创建一个箱子
+    private Chest createChest(Location location) {
+        // 创建箱子并返回
+        Chest chest = (Chest) location.getBlock().getWorld().spawn(location, Chest.class);
         return chest;
     }
 
     // 将玩家物品转移到箱子
-    private void transferItemsToChest(Chest chest, Player player) {
-        // 把玩家背包内的所有物品转移到生成的箱子中
+    private void moveItemsToChest(Player player, Chest chest) {
+        // 把玩家背包内的物品转移到箱子中
         chest.getBlockInventory().setContents(player.getInventory().getContents());
+    }
+
+    // 清空玩家背包
+    private void clearPlayerInventory(Player player) {
+        // 清空玩家的背包
+        player.getInventory().clear();
     }
 }
