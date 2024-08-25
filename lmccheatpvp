@@ -1,0 +1,56 @@
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class PvPProtectionPlugin extends JavaPlugin implements Listener {
+
+    @Override
+    public void onEnable() {
+        Bukkit.getPluginManager().registerEvents(this, this);
+    }
+
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        Location location = player.getLocation();
+        int x = location.getBlockX();
+        int y = location.getBlockY();
+        int z = location.getBlockZ();
+        String coords = String.format("%d:%d:%d", x, y, z);
+        String[] areaParts = "x1:y1:z1,x2:y2:z2".split(","); // 这里需要使用实际的坐标
+
+        if (isPointInArea(coords, areaParts)) {
+            event.setCancelled(true); // 取消事件，阻止玩家攻击
+        }
+    }
+
+    public boolean isPointInArea(String coords, String[] areaParts) {
+        // 你的现有方法，无需修改
+        if (areaParts.length == 2) {
+            String[] minCoords = areaParts[0].split(":");
+            String[] maxCoords = areaParts[1].split(":");
+
+            if (minCoords.length == 3 && maxCoords.length == 3) {
+                int minX = Integer.parseInt(minCoords[0]);
+                int minY = Integer.parseInt(minCoords[1]);
+                int minZ = Integer.parseInt(minCoords[2]);
+                int maxX = Integer.parseInt(maxCoords[0]);
+                int maxY = Integer.parseInt(maxCoords[1]);
+                int maxZ = Integer.parseInt(maxCoords[2]);
+
+                String[] coordParts = coords.split(":");
+                int x = Integer.parseInt(coordParts[0]);
+                int y = Integer.parseInt(coordParts[1]);
+                int z = Integer.parseInt(coordParts[2]);
+
+                return (x >= Math.min(minX, maxX)) && (x <= Math.max(minX, maxX))
+                       && (y >= Math.min(minY, maxY)) && (y <= Math.max(minY, maxY))
+                       && (z >= Math.min(minZ, maxZ)) && (z <= Math.max(minZ, maxZ));
+            }
+        }
+        return false;
+    }
+}
